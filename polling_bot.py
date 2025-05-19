@@ -15,8 +15,6 @@ DJANGO_WEBHOOK_PATH = os.getenv("DJANGO_WEBHOOK_PATH", "/django/webhook")
 WEBHOOK_PORT = int(os.getenv("WEBHOOK_PORT", 8443))
 DJANGO_SECRET_TOKEN = os.getenv("DJANGO_SECRET_TOKEN", "")
 
-# 442783031
-
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
@@ -35,8 +33,11 @@ async def send_tasks(message: types.Message):
 
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
+
             if response.status == 200:
                 tasks_list = await response.json()
+                if not tasks_list:
+                    await bot.send_message(tg_user_id, "У вас нет задач.")
                 for task in tasks_list:
                     text_status = "done" if task["status"] is False else "undone"
                     await bot.send_message(
@@ -49,7 +50,7 @@ async def send_tasks(message: types.Message):
                              f"------------------------------"
                         )
             else:
-                await bot.send_message(message.from_user.id, (await response.json()).get("Error"))
+                await bot.send_message(tg_user_id, (await response.json()).get("Error"))
 
 
 @dp.message(Command("done"))
